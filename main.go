@@ -18,23 +18,27 @@ func check(err error) {
 }
 
 func main() {
-	db, err := sql.Open("postgres", os.Args[1])
-	check(err)
+	if len(os.Args) > 1 && os.Args[1] != "" {
+		db, err := sql.Open("postgres", os.Args[1])
+		check(err)
 
-	rows, err := db.Query("SELECT id, data FROM test_table")
-	check(err)
-	for rows.Next() {
-		var id int64
-		var data string
-		check(rows.Scan(&id, &data))
-		fmt.Printf("(%d, %s)\n", id, data)
+		rows, err := db.Query("SELECT id, data FROM test_table")
+		check(err)
+		for rows.Next() {
+			var id int64
+			var data string
+			check(rows.Scan(&id, &data))
+			fmt.Printf("(%d, %s)\n", id, data)
+		}
+		rows.Close()
 	}
-	rows.Close()
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("welcome"))
 	})
-	http.ListenAndServe(":3000", r)
+	port := "0.0.0.0:8080"
+	fmt.Printf("listening on %s...\n", port)
+	http.ListenAndServe(port, r)
 }
