@@ -17,3 +17,5 @@ jobs:
       - name: Compile
         run: |
           go build
+          docker build .
+          docker ps
