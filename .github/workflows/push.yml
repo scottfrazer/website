@@ -1,5 +1,5 @@
-name: Go
-on: workflow_dispatch
+name: Build Binaries
+on: ["push"]
 
 jobs:
   build:
