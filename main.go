@@ -42,6 +42,8 @@ func tuples(conn string) []tuple {
 }
 
 func main() {
+	dsn := os.Getenv("POSTGRES")
+	fmt.Printf("does this work?  %s\n", dsn)
 
 	writeTuples := func(w io.Writer) {
 		if len(os.Args) > 1 && os.Args[1] != "" {
