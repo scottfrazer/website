@@ -45,6 +45,7 @@ func main() {
 
 	writeTuples := func(w io.Writer) {
 		if len(os.Args) > 1 && os.Args[1] != "" {
+			fmt.Printf("connection string: %s\n", os.Args[1])
 			for _, t := range tuples(os.Args[1]) {
 				fmt.Printf("(%d, %s)\n", t.id, t.data)
 			}
