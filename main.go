@@ -18,6 +18,7 @@ func check(err error) {
 }
 
 func main() {
+
 	if len(os.Args) > 1 && os.Args[1] != "" {
 		db, err := sql.Open("postgres", os.Args[1])
 		check(err)
@@ -33,10 +34,12 @@ func main() {
 		rows.Close()
 	}
 
+	c := 0
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+		c++
+		fmt.Fprintf(w, "%d", c)
 	})
 	port := "0.0.0.0:8080"
 	fmt.Printf("listening on %s...\n", port)
