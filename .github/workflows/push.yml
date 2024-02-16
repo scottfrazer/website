@@ -6,30 +6,34 @@ jobs:
   build:
     runs-on: self-hosted
     # runs-on: ubuntu-latest
-    env:
-      POSTGRES: ${{ secrets.POSTGRES }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go 1.20
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-      # You can test your matrix by printing the current Go version
-      - name: Display Go version
-        run: go version
-      - name: Compile
+
+      - name: Build API Server
         run: |
           # compile
           go build
+          docker build . -t api
 
-          # build container
-          docker build . -t website
+      - name: Build React App
+        run: |
+          cd ui
+          npm run build
+          docker build . -t ui
 
-          # kill all containers
+      - name: Restart Services 
+        run: |
+          # kill all currently running containers
           containers=$(docker ps -q)
           if [ -n "$containers" ]; then
               docker kill $containers
           fi
 
           # start new containers
-          docker run -d -p8080:8080 -e POSTGRES="${{ secrets.POSTGRES }}" website
+          docker run -d -p8080:8080 \
+            -e POSTGRES_DSN="${{ secrets.POSTGRES }}" \
+            api

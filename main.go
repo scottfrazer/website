@@ -42,7 +42,7 @@ func tuples(conn string) []tuple {
 }
 
 func main() {
-	dsn := os.Getenv("POSTGRES")
+	dsn := os.Getenv("POSTGRES_DSN")
 
 	writeTuples := func(w io.Writer) {
 		if dsn != "" {
