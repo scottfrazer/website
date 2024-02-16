@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -17,22 +18,42 @@ func check(err error) {
 	}
 }
 
+type tuple struct {
+	id   int64
+	data string
+}
+
+func tuples(conn string) []tuple {
+	db, err := sql.Open("postgres", conn)
+	check(err)
+
+	rows, err := db.Query("SELECT id, data FROM test_table")
+	check(err)
+	defer rows.Close()
+
+	result := []tuple{}
+	for rows.Next() {
+		var id int64
+		var data string
+		check(rows.Scan(&id, &data))
+		result = append(result, tuple{id, data})
+	}
+	return result
+}
+
 func main() {
 
-	if len(os.Args) > 1 && os.Args[1] != "" {
-		db, err := sql.Open("postgres", os.Args[1])
-		check(err)
-
-		rows, err := db.Query("SELECT id, data FROM test_table")
-		check(err)
-		for rows.Next() {
-			var id int64
-			var data string
-			check(rows.Scan(&id, &data))
-			fmt.Printf("(%d, %s)\n", id, data)
+	writeTuples := func(w io.Writer) {
+		if len(os.Args) > 1 && os.Args[1] != "" {
+			for _, t := range tuples(os.Args[1]) {
+				fmt.Printf("(%d, %s)\n", t.id, t.data)
+			}
+		} else {
+			fmt.Printf("no query string\n")
 		}
-		rows.Close()
 	}
+
+	writeTuples(os.Stdout)
 
 	c := 0
 	r := chi.NewRouter()
@@ -40,6 +61,9 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		c++
 		fmt.Fprintf(w, "%d", c)
+	})
+	r.Get("/tuples", func(w http.ResponseWriter, r *http.Request) {
+		writeTuples(w)
 	})
 	port := "0.0.0.0:8080"
 	fmt.Printf("listening on %s...\n", port)
