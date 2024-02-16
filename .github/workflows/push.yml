@@ -31,6 +31,4 @@ jobs:
           fi
 
           # start new containers
-          docker run -d -p8080:8080 \
-            -e POSTGRES=${{ secrets.POSTGRES }} \
-            website
+          docker run -d -p8080:8080 -e POSTGRES=${{ secrets.POSTGRES }} website
