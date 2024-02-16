@@ -49,7 +49,7 @@ func main() {
 				fmt.Printf("(%d, %s)\n", t.id, t.data)
 			}
 		} else {
-			fmt.Printf("no query string\n")
+			fmt.Printf("no connection string\n")
 		}
 	}
 
