@@ -37,3 +37,5 @@ jobs:
           docker run -d -p8080:8080 \
             -e POSTGRES_DSN="${{ secrets.POSTGRES }}" \
             api
+
+          docker run -d -p9090:8080 ui
