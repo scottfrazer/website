@@ -17,5 +17,6 @@ jobs:
       - name: Compile
         run: |
           go build
-          docker build .
-          docker ps
+          docker build . -t website
+          docker kill $(docker ps -q)
+          docker run -d -p8080:8080 website
