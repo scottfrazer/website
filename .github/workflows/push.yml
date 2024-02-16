@@ -5,6 +5,8 @@ jobs:
   build:
     runs-on: self-hosted
     # runs-on: ubuntu-latest
+    env:
+      POSTGRES: ${{ secrets.POSTGRES }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go 1.20
