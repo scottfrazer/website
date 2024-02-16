@@ -18,7 +18,17 @@ jobs:
         run: go version
       - name: Compile
         run: |
+          # compile
           go build
+
+          # build container
           docker build . -t website
-          docker kill $(docker ps -q)
+
+          # kill all containers
+          containers=$(docker ps -q)
+          if [ -n "$containers" ]; then
+              docker kill $containers
+          fi
+
+          # start new containers
           docker run -d -p8080:8080 website
