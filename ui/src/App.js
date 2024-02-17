@@ -1,22 +1,27 @@
-import logo from './logo.svg';
 import './App.css';
+import React, { useState, useEffect } from 'react';
 
 function App() {
+
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:8080';
+
+  const [start, setStart] = useState([]);
+  const [counter, setCounter] = useState([]);
+
+  useEffect(() => {
+    fetch(baseUrl)
+      .then(response => response.json())
+      .then(data => {
+        setStart(new Date(data.start))
+        setCounter(data.counter)
+      });
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <p>{counter}</p>
+        <p>{start.toLocaleString()}</p>
       </header>
     </div>
   );

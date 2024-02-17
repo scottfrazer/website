@@ -2,10 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"slices"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,6 +44,22 @@ func tuples(conn string) []tuple {
 	return result
 }
 
+var originAllowlist = []string{
+	"http://127.0.0.1:3000",
+	"http://localhost:3000",
+}
+
+func checkCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if slices.Contains(originAllowlist, origin) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Add("Vary", "Origin")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	dsn := os.Getenv("POSTGRES_DSN")
 
@@ -57,11 +76,25 @@ func main() {
 	writeTuples(os.Stdout)
 
 	c := 0
+	s := time.Now()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(checkCORS)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		c++
-		fmt.Fprintf(w, "%d", c)
+		b, err := json.Marshal(struct {
+			Counter int       `json:"counter"`
+			Start   time.Time `json:"start"`
+		}{
+			Counter: c,
+			Start:   s,
+		})
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(b)
 	})
 	r.Get("/tuples", func(w http.ResponseWriter, r *http.Request) {
 		writeTuples(w)
