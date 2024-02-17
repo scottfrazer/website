@@ -15,15 +15,18 @@ jobs:
 
       - name: Build API Server
         run: |
-          go build
+          pushd api
+          make build
           docker build . -t api
+          popd
 
       - name: Build React App
         run: |
-          cd ui
+          pushd ui
           npm install
           REACT_APP_API_BASE_URL=https://api.scottfrazer.net npm run build
           docker build . -t ui
+          popd
 
       - name: Restart Services 
         run: |

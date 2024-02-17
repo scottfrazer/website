@@ -14,6 +14,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var GitHash string
+
 func check(err error) {
 	if err != nil {
 		panic(err)
@@ -94,9 +96,11 @@ func main() {
 		b, err := json.Marshal(struct {
 			Counter int       `json:"counter"`
 			Start   time.Time `json:"start"`
+			GitHash string    `json:"git_hash"`
 		}{
 			Counter: c,
 			Start:   s,
+			GitHash: GitHash,
 		})
 
 		if err != nil {

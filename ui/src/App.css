@@ -24,6 +24,7 @@
   font-size: .3em;
 }
 
-.App-link {
+.App a {
   color: #61dafb;
+  text-decoration: none;
 }
