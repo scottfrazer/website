@@ -7,4 +7,4 @@ run: build
 	./$(BINARY_NAME)
 
 clean:
-    rm -f $(BINARY_NAME)
+	rm -f $(BINARY_NAME)
