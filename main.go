@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"slices"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -47,12 +46,22 @@ func tuples(conn string) []tuple {
 var originAllowlist = []string{
 	"http://127.0.0.1:3000",
 	"http://localhost:3000",
+	"https://scottfrazer.net",
+}
+
+func isAllowed(origin string) bool {
+	for _, allowed := range originAllowlist {
+		if origin == allowed {
+			return true
+		}
+	}
+	return false
 }
 
 func checkCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if slices.Contains(originAllowlist, origin) {
+		if isAllowed(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Add("Vary", "Origin")
 		}
