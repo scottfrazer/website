@@ -23,7 +23,7 @@ jobs:
         run: |
           cd ui
           npm install
-          npm run build:production
+          REACT_APP_API_BASE_URL=https://api.scottfrazer.net npm run build
           docker build . -t ui
 
       - name: Restart Services 

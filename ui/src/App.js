@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 function App() {
 
   console.log(process.env)
-  const baseUrl = process.env.API_BASE_URL || 'http://localhost:8080';
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
   const [start, setStart] = useState([]);
   const [counter, setCounter] = useState([]);
