@@ -15,7 +15,7 @@ function App() {
         setStart(new Date(data.start))
         setCounter(data.counter)
       });
-  }, []);
+  }, [baseUrl]);
 
   return (
     <div className="App">
