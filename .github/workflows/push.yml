@@ -15,7 +15,6 @@ jobs:
 
       - name: Build API Server
         run: |
-          # compile
           go build
           docker build . -t api
 

@@ -2,8 +2,6 @@ import './App.css';
 import React, { useState, useEffect } from 'react';
 
 function App() {
-
-  console.log(process.env)
   const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
   const [start, setStart] = useState([]);
@@ -20,10 +18,10 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <p>{counter}</p>
-        <p>{start.toLocaleString()}</p>
-      </header>
+      <p>scottfrazer.net</p>
+      <div className="footer">
+        {counter} visitors; deployed on {start.toLocaleString()}
+      </div>
     </div>
   );
 }
