@@ -1,4 +1,5 @@
 import './App.css';
+import Source from './Source'
 import React, { useState, useEffect } from 'react';
 import moment from 'moment'
 
@@ -24,10 +25,19 @@ function App() {
 
   return (
     <div className="App">
-      <p>scottfrazer.net</p>
-      <div className="footer">
+      <header className="header">
+        Scott Frazer
+      </header>
+
+      <main className="main">
+        <p>👋 Hello!  This is my site.  I'm still 🚧 working on it 🚧</p>
+        <Source />
+        <p></p>
+      </main>
+
+      <footer className="footer">
         {counter} visitors since deployed at {start} (<a href={gitHashUrl}>{gitHash}</a>)
-      </div>
+      </footer>
     </div>
   );
 }
