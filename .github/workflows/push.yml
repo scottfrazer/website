@@ -39,6 +39,7 @@ jobs:
           # start new containers
           docker run -d -p8080:8080 \
             -e POSTGRES_DSN="${{ secrets.POSTGRES }}" \
+            -e ADMIN_PASSWORD_BCRYPT="${{ secrets.ADMIN_PASSWORD_BCRYPT }}"
             api
 
           docker run -d -p9090:8080 ui

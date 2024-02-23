@@ -1,12 +1,19 @@
+@import "~bootstrap/dist/css/bootstrap.min.css";
+
 body {
   margin: 0;
   height: 100%;
   background-color: #282c34;
   color: white;
-  font-family: Cambria, Georgia, "Times New Roman", Times, serif;
+  /* font-family: Cambria, Georgia, "Times New Roman", Times, serif; */
+  font-family: roboto;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.dropdown-menu {
+  background-color: #ddd;
 }
