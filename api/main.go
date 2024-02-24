@@ -180,6 +180,7 @@ func admin(next http.Handler) http.Handler {
 			fmt.Fprintf(w, `{"error": "not logged in"}`)
 			return
 		}
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -241,7 +242,7 @@ func main() {
 		fmt.Fprintf(w, `{"error": "invalid password"}`)
 		w.WriteHeader(http.StatusForbidden)
 	})
-	r.Post("/blog", func(w http.ResponseWriter, r *http.Request) {
+	r.With(admin).Post("/blog", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
 		check(err)

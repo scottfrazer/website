@@ -25,8 +25,8 @@ jobs:
           pushd ui
           npm install
           REACT_APP_API_BASE_URL=https://api.scottfrazer.net npm run build
-          docker build . -t ui
-          popd
+          sudo rm -rf /var/www/html
+          sudo mv build /var/www/html
 
       - name: Restart Services 
         run: |
