@@ -2,7 +2,7 @@ import './App.css';
 import Source from './Source'
 import React, { useState, useEffect } from 'react';
 import moment from 'moment'
-import { createBrowserRouter, RouterProvider, useParams, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, BrowserRouter, useParams, Navigate, useNavigate, Link } from "react-router-dom";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
@@ -69,51 +69,71 @@ function App() {
       });
   }, []);
 
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <Blog isLoggedIn={isLoggedIn} />,
-    },
-    {
-      path: "/login",
-      element: <Login setIsLoggedIn={setIsLoggedIn} />,
-    },
-    {
-      path: "/edit/:id",
-      element: <Edit />,
-    },
-    {
-      path: "/create",
-      element: <Edit />,
-    },
-    {
-      path: "/logout",
-      element: <Logout setIsLoggedIn={setIsLoggedIn} />,
-    },
-  ]);
-
   return (
-    <div className="App">
-      <header className="header">
-        <div className="title">
-          <a href="/">Scott Frazer</a>
-        </div>
-        <div className="nav">
-          {!isLoggedIn && <a href="/login" type="button">🔑</a>}
-          {isLoggedIn && <a href="/create" type="button">✏️</a>}
-          {isLoggedIn && <a href="/logout" type="button">❌</a>}
-        </div>
-      </header>
+    <BrowserRouter>
+      <div className="App">
+        <header className="header">
+          <div className="title">
+            <Link to="/">Scott Frazer</Link>
+          </div>
+          <div className="nav">
+            <Link to="/list">🗄</Link>
+            {!isLoggedIn && <Link to="/login">🔑</Link>}
+            {isLoggedIn && <Link to="/create">✏️</Link>}
+            {isLoggedIn && <Link to="/logout">❌</Link>}
+          </div>
+        </header>
 
-      <main className="main">
-        <RouterProvider router={router} />
-      </main>
+        <main className="main">
+          <Routes>
+            <Route path="/" element=<Blog isLoggedIn={isLoggedIn} /> />
+            <Route path="/list" element=<List /> />
+            <Route path="/edit/:id" element=<Edit /> />
+            <Route path="/create" element=<Edit /> />
+            <Route path="/login" element=<Login setIsLoggedIn={setIsLoggedIn} /> />
+            <Route path="/logout" element=<Logout setIsLoggedIn={setIsLoggedIn} /> />
+          </Routes>
+        </main>
 
-      <footer className="footer">
-        {counter} visitors since deployed at {start} (<a href={gitHashUrl}>{gitHash}</a>)
-      </footer>
-    </div >
+        <footer className="footer">
+          {counter} visitors since deployed at {start} (<a href={gitHashUrl}>{gitHash}</a>)
+        </footer>
+      </div>
+    </BrowserRouter>
   );
+}
+
+function List() {
+  const [posts, setPosts] = useState([]);
+  const [error, setError] = useState([]);
+
+  useEffect(() => {
+    apiRequest(`/blog/list`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error)
+        } else {
+          setError(undefined)
+          data = data.map(p => {
+            const s = moment(new Date(p.date))
+            p.date = s.format('YYYY-MM-DD')
+            return p
+          })
+          setPosts(data)
+        }
+      })
+  }, [])
+
+  if (error !== undefined) {
+    return <div>Error: {error}</div>
+  }
+
+  return <div>
+    <ul>
+      {posts.map((post) => (<li key={post.id}>{post.date} - <Link to={`/edit/${post.id}`}>{post.title}</Link></li>))}
+    </ul>
+  </div>
 }
 
 function Edit() {
@@ -222,6 +242,7 @@ function Edit() {
 
 function Blog(props) {
   const [blogPost, setBlogPost] = useState([]);
+  const [displayDate, setDisplayDate] = useState("")
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
@@ -231,6 +252,8 @@ function Blog(props) {
         if (data.error) {
           setError(data.error)
         } else {
+          const s = moment(new Date(data.date))
+          setDisplayDate(s.format('YYYY-MM-DD'))
           setBlogPost(data)
         }
       })
@@ -244,9 +267,9 @@ function Blog(props) {
   return (
     <div className="blog">
       <h1>{blogPost.title}</h1>
-      <div className="blog-post-meta">{blogPost.date}</div>
+      <div className="mb-3">📅&nbsp;&nbsp;{displayDate}</div>
       {paragraphs(blogPost)}
-      {props.isLoggedIn && blogPost.id && <a href={`/edit/${blogPost.id}`}>✏️</a>}
+      {props.isLoggedIn && blogPost.id && <Link to={`/edit/${blogPost.id}`}>✏️</Link>}
     </div>
   )
 }

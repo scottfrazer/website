@@ -8,9 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -39,16 +37,31 @@ type BlogPost struct {
 	Content string    `json:"content"`
 }
 
-type P struct {
-	Type     string `json:"type"`
-	Content  string `json:"content"`
-	Language string `json:"language"`
-}
-
 func NewBlogRepo(db *sql.DB) *BlogRepo {
 	r := &BlogRepo{db}
 	check(r.Init())
 	return r
+}
+
+func (repo BlogRepo) List() ([]BlogPost, error) {
+	rows, err := repo.db.Query("SELECT id, title, date, content FROM blog;")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []BlogPost{}
+
+	for rows.Next() {
+		var id int64
+		var title string
+		var date time.Time
+		var content string
+		if err := rows.Scan(&id, &title, &date, &content); err != nil {
+			return nil, err
+		}
+		result = append(result, BlogPost{id, title, date, content})
+	}
+	return result, nil
 }
 
 func (repo BlogRepo) Init() error {
@@ -105,28 +118,6 @@ func (repo BlogRepo) Create(title string, date time.Time, content string) (BlogP
 	}
 
 	return BlogPost{id, title, date, content}, nil
-}
-
-func ParseBlogContent(input []byte) []P {
-	r := regexp.MustCompile(`\n{2,}`)
-	paragraphs := []P{}
-	for _, part := range r.Split(string(input), -1) {
-		part = strings.TrimSpace(part)
-		var p P
-		if strings.HasPrefix(part, "{code}") {
-			p = P{
-				Type:    "code",
-				Content: part,
-			}
-		} else {
-			p = P{
-				Type:    "text",
-				Content: part,
-			}
-		}
-		paragraphs = append(paragraphs, p)
-	}
-	return paragraphs
 }
 
 var originAllowlist = []string{
@@ -288,6 +279,14 @@ func main() {
 		check(json.Unmarshal(body, &post))
 		check(blogRepo.Set(post))
 		w.Write(body)
+	})
+	r.Get("/blog/list", func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		list, err := blogRepo.List()
+		check(err)
+		listBytes, err := json.Marshal(list)
+		check(err)
+		w.Write(listBytes)
 	})
 	port := "0.0.0.0:8080"
 	fmt.Printf("listening on %s...\n", port)
