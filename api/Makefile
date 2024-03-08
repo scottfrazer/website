@@ -1,5 +1,5 @@
 BINARY_NAME=api
-POSTGRES_DSN='sslmode=disable host=localhost dbname=test_database'
+POSTGRES_DSN='sslmode=disable host=localhost dbname=website'
 ADMIN_PASSWORD_BCRYPT='$$2a$$12$$/Kav49dP2l31ssbwNeD4vOqWNafvPinjat0P8k/fQbFi3dcP6PQwS'
 
 build:

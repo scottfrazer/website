@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"github.com/scottfrazer/running/strava"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -178,6 +180,7 @@ func admin(next http.Handler) http.Handler {
 var tokens map[string]string
 
 func main() {
+	ctx := context.Background()
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_DSN"))
 	check(err)
 
@@ -188,9 +191,28 @@ func main() {
 	c := 0
 	s := time.Now()
 	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 	r.Use(cors)
 	r.Use(session)
+
+	store, err := strava.NewPostgresDataStore(os.Getenv("POSTGRES_DSN"))
+	check(err)
+	session, err := store.GetSession()
+	check(err)
+	if session == nil {
+		session = &strava.StravaSession{
+			RefreshToken: os.Getenv("STRAVA_REFRESH_TOKEN"),
+			ClientId:     os.Getenv("STRAVA_CLIENT_ID"),
+			ClientSecret: os.Getenv("STRAVA_SECRET_KEY"),
+		}
+	}
+	stravaClient, err := strava.NewStravaClientFromSession(*session)
+	check(err)
+	check(stravaClient.Sync(ctx, store))
+
 	r.Method("OPTIONS", "/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set headers for CORS preflight requests
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
@@ -200,6 +222,54 @@ func main() {
 		// Respond with a 200 status code to indicate that CORS is allowed
 		w.WriteHeader(http.StatusOK)
 	}))
+	r.Get("/running/list", func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		queryPage := query.Get("page")
+		queryPerPage := query.Get("perPage")
+
+		page, _ := strconv.ParseInt(queryPage, 10, 64)
+		perPage, _ := strconv.ParseInt(queryPerPage, 10, 64)
+
+		if page == 0 {
+			page = 1
+		}
+		if perPage == 0 {
+			perPage = 50
+		}
+
+		type UiActivity struct {
+			Id          int64  `json:"id"`
+			Title       string `json:"title"`
+			MovingTime  string `json:"moving_time"`
+			Pace        string `json:"pace"`
+			Distance    string `json:"distance"`
+			Type        string `json:"type"`
+			WorkoutType int    `json:"workout_type"`
+			Date        string `json:"date"`
+		}
+
+		activities, err := store.LoadPage(int(page), int(perPage))
+		check(err)
+
+		uiActivities := []UiActivity{}
+		for _, activity := range activities {
+			uiActivities = append(uiActivities, UiActivity{
+				Id:          activity.Id,
+				Title:       activity.Name,
+				MovingTime:  activity.MovingTimeString(),
+				Pace:        activity.PacePerMile(),
+				Distance:    activity.DistanceString(),
+				Type:        activity.Type,
+				WorkoutType: activity.WorkoutType,
+				Date:        activity.Date().Format(time.RFC3339),
+			})
+		}
+
+		bytes, err := json.Marshal(uiActivities)
+		check(err)
+		_, err = w.Write(bytes)
+		check(err)
+	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		c++
 		b, err := json.Marshal(struct {

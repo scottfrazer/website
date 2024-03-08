@@ -2,7 +2,10 @@ import './App.css';
 import Source from './Source'
 import React, { useState, useEffect } from 'react';
 import moment from 'moment'
-import { Routes, Route, BrowserRouter, useParams, Navigate, useNavigate, Link } from "react-router-dom";
+import { Routes, Route, BrowserRouter, useParams, Navigate, useNavigate, Link, useLocation } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoffee } from '@fortawesome/free-solid-svg-icons'
+
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
@@ -37,7 +40,7 @@ function Login(props) {
       });
   }
 
-  return <div>
+  return <div className="login">
     <form className="row align-items-center" onSubmit={save}>
       <div className="col-auto">
         <input id="password" type="password" className="form-control" onChange={e => setPassword(e.target.value)} />
@@ -78,6 +81,7 @@ function App() {
           </div>
           <div className="nav">
             <Link to="/list">🗄</Link>
+            <Link to="/running">🏃</Link>
             {!isLoggedIn && <Link to="/login">🔑</Link>}
             {isLoggedIn && <Link to="/create">✏️</Link>}
             {isLoggedIn && <Link to="/logout">❌</Link>}
@@ -87,6 +91,7 @@ function App() {
         <main className="main">
           <Routes>
             <Route path="/" element=<Blog isLoggedIn={isLoggedIn} /> />
+            <Route path="/running" element=<Running page={1} perPage={50} /> />
             <Route path="/list" element=<List /> />
             <Route path="/edit/:id" element=<Edit /> />
             <Route path="/create" element=<Edit /> />
@@ -96,11 +101,97 @@ function App() {
         </main>
 
         <footer className="footer">
-          {counter} visitors since deployed at {start} (<a href={gitHashUrl}>{gitHash}</a>)
+          {counter} visits since deployed at {start} (<a href={gitHashUrl}>{gitHash}</a>)
         </footer>
       </div>
     </BrowserRouter>
   );
+}
+
+function Running(props) {
+  const [activities, setActivities] = useState([]);
+  const [error, setError] = useState([]);
+
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  var { page: pageFromQuery, perPage: perPageFromQuery } = Object.fromEntries(queryParams.entries());
+
+  const isNumeric = (value) => !isNaN(value);
+
+  if (!isNumeric(pageFromQuery)) {
+    pageFromQuery = 1
+  } else {
+    pageFromQuery = parseInt(pageFromQuery)
+  }
+
+  if (!isNumeric(perPageFromQuery)) {
+    perPageFromQuery = 50
+  } else {
+    perPageFromQuery = parseInt(perPageFromQuery)
+  }
+
+  useEffect(() => {
+    apiRequest(`/running/list?page=${pageFromQuery}&perPage=${perPageFromQuery}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error)
+        } else {
+          data = data.map(p => {
+            const s = moment(p.date).utc()
+            p.date = s.format('YYYY-MM-DD')
+            p.time = s.format('hh:mm')
+            return p
+          })
+          setError(undefined)
+          setActivities(data)
+        }
+      })
+  }, [pageFromQuery, perPageFromQuery])
+
+  if (error !== undefined) {
+    return <div>Error: {error}</div>
+  }
+
+  console.log(pageFromQuery)
+  console.log(perPageFromQuery)
+  console.log(activities.length)
+
+  return <div className="running">
+    <div>
+      {pageFromQuery === 1 ? <span>prev</span> : <Link to={{ pathname: '/running', search: `?page=${pageFromQuery - 1}&perPage=${perPageFromQuery}` }}>prev</Link>}
+      &nbsp;|&nbsp;
+      {activities.length !== perPageFromQuery ? <span>next</span> : <Link to={{ pathname: '/running', search: `?page=${pageFromQuery + 1}&perPage=${perPageFromQuery}` }}>next</Link>}
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <td>Date</td>
+          <td>Time</td>
+          <td>Title</td>
+          <td>Distance</td>
+          <td>Type</td>
+          <td>Pace</td>
+          <td>Time</td>
+          <td>Link</td>
+        </tr>
+      </thead>
+      <tbody>
+        {activities.map((activity) => (
+          <tr key={activity.id}>
+            <td>{activity.date}</td>
+            <td>{activity.time}</td>
+            <td class="title">{activity.title}</td>
+            <td>{activity.distance}</td>
+            <td>{activity.type}</td>
+            <td>{activity.pace}/mi</td>
+            <td>{activity.moving_time}</td>
+            <td><a href={`https://strava.com/activities/${activity.id}`}><FontAwesomeIcon icon={faCoffee} /></a></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div >
 }
 
 function List() {
@@ -129,7 +220,7 @@ function List() {
     return <div>Error: {error}</div>
   }
 
-  return <div>
+  return <div className="bloglist">
     <ul>
       {posts.map((post) => (<li key={post.id}>{post.date} - <Link to={`/edit/${post.id}`}>{post.title}</Link></li>))}
     </ul>

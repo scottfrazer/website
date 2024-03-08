@@ -13,14 +13,43 @@
 .main {
   flex-grow: 1;
   padding: 0 10px;
-  max-width: 600px;
-  margin: 0 auto;
+  /* margin: 0 auto; */
 }
 
-.main textarea {
+.blog {
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+.login {
+  margin: 0 auto;
+  display: inline-block;
+}
+
+.bloglist {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.bloglist ul {
+  list-style: none;
+}
+
+.editor {
   margin: 0 auto;
   width: 500px;
-  height: 1000px;
+}
+
+.editor textarea {
+  height: 300px;
+}
+
+.running td {
+  padding: 5px;
+}
+
+.running .title {
+  width: 600px;
 }
 
 .header {
