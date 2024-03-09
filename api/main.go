@@ -209,6 +209,7 @@ func main() {
 			ClientSecret: os.Getenv("STRAVA_SECRET_KEY"),
 		}
 	}
+	fmt.Printf("session %+v\n", session)
 	stravaClient, err := strava.NewStravaClientFromSession(*session)
 	check(err)
 	check(stravaClient.Sync(ctx, store))
