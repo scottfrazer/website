@@ -209,7 +209,6 @@ func main() {
 			ClientSecret: os.Getenv("STRAVA_SECRET_KEY"),
 		}
 	}
-	fmt.Printf("session %+v\n", session)
 	stravaClient, err := strava.NewStravaClientFromSession(*session)
 	check(err)
 	check(stravaClient.Sync(ctx, store))
@@ -223,6 +222,29 @@ func main() {
 		// Respond with a 200 status code to indicate that CORS is allowed
 		w.WriteHeader(http.StatusOK)
 	}))
+	r.Get("/running/stats", func(w http.ResponseWriter, r *http.Request) {
+		all, err := store.Load(strava.ActivityFilter{})
+		check(err)
+
+		type UiStats struct {
+			MilesPerYear     map[int]float64 `json:"miles_per_year"`
+			ActivitesPerYear map[int]int     `json:"activites_per_year"`
+		}
+		stats := UiStats{
+			MilesPerYear:     map[int]float64{},
+			ActivitesPerYear: map[int]int{},
+		}
+		for _, activity := range all {
+			year := activity.Date().Year()
+			stats.MilesPerYear[year] += activity.Miles()
+			stats.ActivitesPerYear[year] += 1
+		}
+
+		bytes, err := json.Marshal(stats)
+		check(err)
+		_, err = w.Write(bytes)
+		check(err)
+	})
 	r.Get("/running/list", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPage := query.Get("page")

@@ -23,7 +23,8 @@
 
 .login {
   margin: 0 auto;
-  display: inline-block;
+  justify-content: center;
+  align-items: center;
 }
 
 .bloglist {

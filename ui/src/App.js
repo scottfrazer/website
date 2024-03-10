@@ -92,6 +92,7 @@ function App() {
           <Routes>
             <Route path="/" element=<Blog isLoggedIn={isLoggedIn} /> />
             <Route path="/running" element=<Running page={1} perPage={50} /> />
+            <Route path="/running/stats" element=<RunningStats /> />
             <Route path="/list" element=<List /> />
             <Route path="/edit/:id" element=<Edit /> />
             <Route path="/create" element=<Edit /> />
@@ -106,6 +107,61 @@ function App() {
       </div>
     </BrowserRouter>
   );
+}
+
+function RunningStats(props) {
+  const [stats, setStats] = useState([]);
+  const [error, setError] = useState([]);
+
+  useEffect(() => {
+    apiRequest(`/running/stats`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error)
+        } else {
+          const keys = Object.keys(data['activites_per_year']);
+          keys.sort();
+
+          // Step 3: Iterate over the sorted keys
+          var table = []
+          for (const key of keys) {
+            table.push({
+              year: key,
+              activites: data['activites_per_year'][key],
+              miles: data['miles_per_year'][key],
+            })
+          }
+          setError(undefined)
+          setStats(table)
+        }
+      })
+  }, [])
+
+  if (error !== undefined) {
+    return <div>Error: {error}</div>
+  }
+
+  return <div className="running">
+    <table>
+      <thead>
+        <tr>
+          <td>Year</td>
+          <td>Activity Count</td>
+          <td>Total Miles</td>
+        </tr>
+      </thead>
+      <tbody>
+        {stats.map((row) => (
+          <tr key={row.year}>
+            <td>{row.year}</td>
+            <td>{row.activites}</td>
+            <td>{row.miles}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div >
 }
 
 function Running(props) {
@@ -153,11 +209,8 @@ function Running(props) {
     return <div>Error: {error}</div>
   }
 
-  console.log(pageFromQuery)
-  console.log(perPageFromQuery)
-  console.log(activities.length)
-
   return <div className="running">
+    <p>I like to run. Below is a list of every run I've done.  I also have <Link to='/running/stats'>stats</Link></p>
     <div>
       {pageFromQuery === 1 ? <span>prev</span> : <Link to={{ pathname: '/running', search: `?page=${pageFromQuery - 1}&perPage=${perPageFromQuery}` }}>prev</Link>}
       &nbsp;|&nbsp;
@@ -382,7 +435,11 @@ function paragraphs(data) {
     content = content.trim()
     if (content.length > 0) {
       if (blockType === 'p') {
-        blocks.push(<Paragraph key={key} content={content} />)
+        if (content[0] === '<') {
+          blocks.push(<div dangerouslySetInnerHTML={{ __html: content }}></div>)
+        } else {
+          blocks.push(<Paragraph key={key} content={content} />)
+        }
       }
       if (blockType === 'c') {
         blocks.push(<Source key={key} code={content} language={language} />)
